@@ -16,9 +16,28 @@
 
 $(function() {
   var first = $('#ss').children(':first-child');
+  var showing = null;
+  var nextTimeout = null;
+  var showNext = function() {
+    $('<img/>')
+      .load(function() { show(false, first); })
+      .error(function() { $('#ss').text('ERROR'); })
+      .attr('src', first.attr('src'));
+  };
+
+  $('body').keypress(function(e) {
+    if (e.which == 'j'.charCodeAt(0)) {
+      clearTimeout(nextTimeout);
+      show(showing, showing.next());
+    } else if (e.which == 'k'.charCodeAt(0)) {
+      clearTimeout(nextTimeout);
+      show(showing, showing.prev());
+    }
+  });
 
   function show(last, next) {
     var ratio = next.width() / next.height();
+    showing = next;
 
     next.css('position', 'absolute');
     next.width(Math.min(next.width(), $(window).width()));
@@ -33,17 +52,17 @@ $(function() {
     if (last) last.fadeOut(1000);
     next.fadeIn(1000);
 
-    window.setTimeout(function() {
+    showNext = function() {
       last = next;
       next = next.next();
-      if (next.length === 0)
-        next = first;
+      if (next.length === 0) {
+        //next = first;
+        window.location = $('#after').attr('href');
+      }
       show(last, next);
-    }, 5000);
+    };
+    nextTimeout = window.setTimeout(showNext, 5000);
   }
 
-  $('<img/>')
-    .load(function() { show(false, first); })
-    .error(function() { $('#ss').text('ERROR'); })
-    .attr('src', first.attr('src'));
+  showNext();
 });
