@@ -11,3 +11,13 @@
  *= require_self
  *= require_tree .
  */
+body {
+  background-color: black;
+  color: red;
+  font-size: 24pt;
+}
+
+#ss>img {
+  display: none;
+}
+

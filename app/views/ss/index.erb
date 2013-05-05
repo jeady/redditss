@@ -1,0 +1,5 @@
+<div id="ss">
+  <% @img.each do |i| %>
+    <img src="<%= i[:url] %>" alt="<%= i[:title] %>" />
+  <% end %>
+</div>
