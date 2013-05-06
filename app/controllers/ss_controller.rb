@@ -13,5 +13,8 @@ class SsController < ApplicationController
              .each { |s| s[:url] += '.jpg' if !s[:url].ends_with?('.jpg') }
 
     @next = @img[-1][:id]
+    if request.xhr?
+      render :json => {img: @img, next: @next}
+    end
   end
 end
