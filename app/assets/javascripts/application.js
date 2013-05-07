@@ -22,6 +22,8 @@ $(function() {
   var next = first;
   var showFor = 5000;
   var transitionFor = 1000;
+  var loadMore = true;
+  var showTitles = true;
 
   $('body').keypress(function(e) {
     if (e.which == 'j'.charCodeAt(0)) {
@@ -39,6 +41,14 @@ $(function() {
       next = first;
       transition();
       interval = setInterval(transition, showFor);
+    } else if (e.which == 'i'.charCodeAt(0)) {
+      flash(showing.prevAll().size() + ' / ' + ss.children().size());
+    } else if (e.which == 'l'.charCodeAt(0)) {
+      loadMore = !loadMore;
+      if (loadMore) flash('Infinite.');
+      else flash('Looping.');
+    } else if (e.which == 't'.charCodeAt(0)) {
+      showTitles = !showTitles;
     }
   });
 
@@ -62,8 +72,10 @@ $(function() {
     next = showing.next();
     if (next.length === 0)
       next = first;
+    if (showTitles)
+      flash(showing.attr('alt'));
 
-    if (next.next().next().length === 0) {
+    if (loadMore && next.next().next().length === 0) {
       jQuery.get($('#after').attr('href'), function(data) {
         $('#after').attr('href', '?after=' + data.next);
         $.each(data.img, function(_, i) {
@@ -77,4 +89,17 @@ $(function() {
     .load(function() { interval = setInterval(transition, showFor); })
     .error(function() { $('#ss').text('ERROR'); })
     .attr('src', first.attr('src'));
+
+  function flash(text) {
+    var e = $('<div/>').text(text).addClass('flash');
+    e.hide();
+    $('#flashes').append(e);
+    e.fadeIn(500);
+    window.setTimeout(function() {
+      e.fadeOut(500);
+      window.setTimeout(function() {
+        e.remove();
+      }, 700);
+    }, 2000);
+  }
 });
