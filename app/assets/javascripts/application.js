@@ -24,23 +24,24 @@ $(function() {
   var transitionFor = 1000;
   var loadMore = true;
   var showTitles = true;
+  var paused = false;
 
   $('body').keypress(function(e) {
     if (e.which == 'j'.charCodeAt(0)) {
-      clearInterval(interval);
+      if (!paused) clearInterval(interval);
       transition();
-      interval = setInterval(transition, showFor);
+      if (!paused) interval = setInterval(transition, showFor);
     } else if (e.which == 'k'.charCodeAt(0)) {
-      clearInterval(interval);
+      if (!paused) clearInterval(interval);
       next = showing.prev();
       if (next.length === 0) next = ss.children(':last-child');
       transition();
-      interval = setInterval(transition, showFor);
+      if (!paused) interval = setInterval(transition, showFor);
     } else if (e.which == 's'.charCodeAt(0)) {
-      clearInterval(interval);
+      if (!paused) clearInterval(interval);
       next = first;
       transition();
-      interval = setInterval(transition, showFor);
+      if (!paused) interval = setInterval(transition, showFor);
     } else if (e.which == 'i'.charCodeAt(0)) {
       flash(showing.prevAll().size() + ' / ' + ss.children().size());
     } else if (e.which == 'l'.charCodeAt(0)) {
@@ -49,6 +50,15 @@ $(function() {
       else flash('Looping.');
     } else if (e.which == 't'.charCodeAt(0)) {
       showTitles = !showTitles;
+    } else if (e.which == 'p'.charCodeAt(0)) {
+      paused = !paused;
+      if (paused) {
+        flash('Paused.');
+        clearInterval(interval);
+      } else {
+        flash('Playing.');
+        interval = setInterval(transition, showFor);
+      }
     }
   });
 
