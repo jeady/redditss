@@ -28,15 +28,9 @@ $(function() {
 
   $('body').keypress(function(e) {
     if (e.which == 'j'.charCodeAt(0)) {
-      if (!paused) clearInterval(interval);
-      transition();
-      if (!paused) interval = setInterval(transition, showFor);
+      transition_next();
     } else if (e.which == 'k'.charCodeAt(0)) {
-      if (!paused) clearInterval(interval);
-      next = showing.prev();
-      if (next.length === 0) next = ss.children(':last-child');
-      transition();
-      if (!paused) interval = setInterval(transition, showFor);
+      transition_prev();
     } else if (e.which == 's'.charCodeAt(0)) {
       if (!paused) clearInterval(interval);
       next = first;
@@ -51,16 +45,36 @@ $(function() {
     } else if (e.which == 't'.charCodeAt(0)) {
       showTitles = !showTitles;
     } else if (e.which == 'p'.charCodeAt(0)) {
-      paused = !paused;
-      if (paused) {
-        flash('Paused.');
-        clearInterval(interval);
-      } else {
-        flash('Playing.');
-        interval = setInterval(transition, showFor);
-      }
+      pause();
     }
   });
+  $('body').addSwipeEvents()
+    .bind('swipeleft', transition_prev)
+    .bind('swiperight', transition_next)
+    .bind('tap', pause);
+
+  function transition_next() {
+    if (!paused) clearInterval(interval);
+    transition();
+    if (!paused) interval = setInterval(transition, showFor);
+  }
+  function transition_prev() {
+    if (!paused) clearInterval(interval);
+    next = showing.prev();
+    if (next.length === 0) next = ss.children(':last-child');
+    transition();
+    if (!paused) interval = setInterval(transition, showFor);
+  }
+  function pause() {
+    paused = !paused;
+    if (paused) {
+      flash('Paused.');
+      clearInterval(interval);
+    } else {
+      flash('Playing.');
+      interval = setInterval(transition, showFor);
+    }
+  }
 
   function transition() {
     var ratio = next.width() / next.height();
