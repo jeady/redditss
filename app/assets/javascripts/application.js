@@ -16,17 +16,20 @@
 
 $(function() {
   var ss = $('#ss');
-  var first = ss.children(':first-child');
   var showing = null;
   var interval = null;
-  var next = first;
   var showFor = 5000;
   var fade = false;
   var transitionFor = 1000;
   var loadMore = true;
   var showTitles = true;
   var paused = false;
+  var fetchWhen = 5;
+  var preload = 2;
   var showingUrls = [];
+  var allImg = [];
+  var toShow = [];
+  var showed = [];
 
   ss.children().each(function(_, e) {
     showingUrls.push(e.src);
@@ -34,14 +37,20 @@ $(function() {
 
   $('body').keypress(function(e) {
     if (e.which == 'j'.charCodeAt(0)) {
-      transition_next();
+      transition_next_now();
     } else if (e.which == 'k'.charCodeAt(0)) {
-      transition_prev();
+      transition_prev_now();
     } else if (e.which == 's'.charCodeAt(0)) {
       if (!paused) clearInterval(interval);
-      next = first;
-      transition();
-      if (!paused) interval = setInterval(transition, showFor);
+      var i;
+      toShow = [];
+      for (i = 0; i < allImg.length; i++)
+        toShow.push(allImg[i]);
+      for (i = 0; i <= preload; i++)
+        transition_next();
+      for (i = 0; i < allImg.length; i++)
+        showed.push(allImg[i]);
+      if (!paused) interval = setInterval(transition_next, showFor);
     } else if (e.which == 'i'.charCodeAt(0)) {
       flash(showing.prevAll().size() + ' / ' + ss.children().size());
     } else if (e.which == 'l'.charCodeAt(0)) {
@@ -55,21 +64,45 @@ $(function() {
     }
   });
   $('body').addSwipeEvents()
-    .bind('swiperight', transition_prev)
-    .bind('swipeleft', transition_next)
+    .bind('swiperight', transition_prev_now)
+    .bind('swipeleft', transition_next_now)
     .bind('tap', pause);
 
-  function transition_next() {
+  function transition_next_now() {
     if (!paused) clearInterval(interval);
-    transition();
-    if (!paused) interval = setInterval(transition, showFor);
+    transition_next();
+    if (!paused) interval = setInterval(transition_next, showFor);
   }
-  function transition_prev() {
+  function transition_next() {
+    center(next);
+
+    if (showing) hide(showing);
+    show(next);
+
+    showing = next;
+    next = showing.next();
+    if (showTitles)
+      flash(showing.attr('alt'));
+
+    prepareNext();
+  }
+  function transition_prev_now() {
     if (!paused) clearInterval(interval);
     next = showing.prev();
-    if (next.length === 0) next = ss.children(':last-child');
-    transition();
-    if (!paused) interval = setInterval(transition, showFor);
+    if (next.length === 0) flash('ERROR');
+
+    center(next);
+
+    if (showing) hide(showing);
+    show(next);
+
+    showing = next;
+    next = showing.next();
+    if (showTitles)
+      flash(showing.attr('alt'));
+
+    preparePrev();
+    if (!paused) interval = setInterval(transition_next, showFor);
   }
   function pause() {
     paused = !paused;
@@ -78,7 +111,7 @@ $(function() {
       clearInterval(interval);
     } else {
       flash('Playing.');
-      interval = setInterval(transition, showFor);
+      interval = setInterval(transition_next, showFor);
     }
   }
   function show(img) {
@@ -94,46 +127,66 @@ $(function() {
       img.hide();
   }
 
-  function transition() {
-    var ratio = next.width() / next.height();
+  function center(img) {
+    var ratio = img.width() / img.height();
 
-    next.css('position', 'absolute');
-    next.width(Math.min(next.width(), $(window).width()));
-    next.height(next.width() / ratio);
+    img.css('position', 'absolute');
+    img.width(Math.min(img.width(), $(window).width()));
+    img.height(img.width() / ratio);
 
-    next.height(Math.min(next.height(), $(window).height()));
-    next.width(ratio * next.height());
+    img.height(Math.min(img.height(), $(window).height()));
+    img.width(ratio * img.height());
 
-    next.css('left', (($(window).width() - next.width()) / 2) + 'px');
-    next.css('top', (($(window).height() - next.height()) / 2) + 'px');
+    img.css('left', (($(window).width() - img.width()) / 2) + 'px');
+    img.css('top', (($(window).height() - img.height()) / 2) + 'px');
+  }
 
-    if (showing) hide(showing);
-    show(next);
+  function prepareNext() {
+    var next = toShow.shift();
+    ss.append($('<img/>').attr('src', next.url).attr('alt', next.alt));
+    var last = ss.children(':first-child');
+    showed.push({url: last.attr('src'), alt: last.attr('alt')});
+    last.remove();
 
-    showing = next;
-    next = showing.next();
-    if (next.length === 0)
-      next = first;
-    if (showTitles)
-      flash(showing.attr('alt'));
+    if (toShow.length == fetchWhen) {
+      if (loadMore)
+        fetch_more();
+      else
+        toShow = toShow.concat(allImg);
+    }
 
-    if (loadMore && next.next().next().length === 0) {
-      jQuery.get($('#after').attr('href'), function(data) {
-        $('#after').attr('href', '?after=' + data.next);
-        $.each(data.img, function(_, i) {
-          if (-1 == showingUrls.indexOf(i.url)) {
-            showingUrls.push(i.url);
-            ss.append($('<img/>').attr('src', i.url).attr('alt', i.title));
-          }
-        });
-      });
+    if (showed.length == 2 * fetchWhen + allImg.length)
+      showed = showed.slice(showed.length - allImg.length);
+  }
+
+  function preparePrev() {
+    var next = showed.pop();
+    ss.prepend($('<img/>').attr('src', next.url).attr('alt', next.alt));
+    var last = ss.children(':last-child');
+    toShow.unshift({url: last.attr('src'), alt: last.attr('alt')});
+    last.remove();
+
+    if (showed.length == fetchWhen) {
+      showed = allImg.concat(showed);
     }
   }
 
-  $('<img/>')
-    .load(function() { interval = setInterval(transition, showFor); })
-    .error(function() { $('#ss').text('ERROR'); })
-    .attr('src', first.attr('src'));
+  function fetch_more(cb) {
+    console.log('Fetching...');
+    if (typeof(cb) == 'undefined')
+      cb = function() {};
+    jQuery.get($('#after').attr('href'), function(data) {
+      $('#after').attr('href', '?after=' + data.next);
+      $.each(data.img, function(_, i) {
+        if (-1 == showingUrls.indexOf(i.url)) {
+          showingUrls.push(i.url);
+          allImg.push({url: i.url, alt: i.title});
+          toShow.push({url: i.url, alt: i.title});
+        }
+      });
+      cb();
+    });
+  }
 
   function flash(text) {
     var e = $('<div/>').text(text).addClass('flash');
@@ -147,4 +200,30 @@ $(function() {
       }, 700);
     }, showFor);
   }
+
+  // Begin.
+  fetch_more(function() {
+    var i;
+    for (i = 0; i < allImg.length; i++)
+      showed.push(allImg[i]);
+    for (i = 0; i < preload; i++)
+      toShow.unshift(allImg[allImg.length - 1 - i]);
+    for (i = 0; i < preload * 2 + 1; i++) {
+      var e = toShow.shift();
+      var img = $('<img/>').attr('src', e.url).attr('alt', e.alt);
+      ss.append(img);
+      if (i == preload) {
+        showing = img;
+      } else if (i == preload + 1) {
+        next = img;
+      }
+    }
+
+    center(showing);
+    showing
+     .load(function() {
+       showing.show();
+       interval = setInterval(transition_next, showFor); })
+     .error(function() { $('#ss').text('ERROR'); });
+  });
 });
