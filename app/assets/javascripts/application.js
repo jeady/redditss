@@ -21,6 +21,7 @@ $(function() {
   var interval = null;
   var next = first;
   var showFor = 5000;
+  var fade = false;
   var transitionFor = 1000;
   var loadMore = true;
   var showTitles = true;
@@ -80,6 +81,18 @@ $(function() {
       interval = setInterval(transition, showFor);
     }
   }
+  function show(img) {
+    if (fade)
+      img.fadeIn(transitionFor);
+    else
+      img.show();
+  }
+  function hide(img) {
+    if (fade)
+      img.fadeOut(transitionFor);
+    else
+      img.hide();
+  }
 
   function transition() {
     var ratio = next.width() / next.height();
@@ -94,8 +107,8 @@ $(function() {
     next.css('left', (($(window).width() - next.width()) / 2) + 'px');
     next.css('top', (($(window).height() - next.height()) / 2) + 'px');
 
-    if (showing) showing.fadeOut(transitionFor);
-    next.fadeIn(transitionFor);
+    if (showing) hide(showing);
+    show(next);
 
     showing = next;
     next = showing.next();
@@ -126,12 +139,12 @@ $(function() {
     var e = $('<div/>').text(text).addClass('flash');
     e.hide();
     $('#flashes').append(e);
-    e.fadeIn(500);
+    show(e);
     window.setTimeout(function() {
-      e.fadeOut(500);
+      hide(e);
       window.setTimeout(function() {
         e.remove();
       }, 700);
-    }, 2000);
+    }, showFor);
   }
 });
