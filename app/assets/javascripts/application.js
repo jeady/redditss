@@ -54,8 +54,8 @@ $(function() {
     }
   });
   $('body').addSwipeEvents()
-    .bind('swipeleft', transition_prev)
-    .bind('swiperight', transition_next)
+    .bind('swiperight', transition_prev)
+    .bind('swipeleft', transition_next)
     .bind('tap', pause);
 
   function transition_next() {
