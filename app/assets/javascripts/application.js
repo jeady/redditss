@@ -25,6 +25,11 @@ $(function() {
   var loadMore = true;
   var showTitles = true;
   var paused = false;
+  var showingUrls = [];
+
+  ss.children().each(function(_, e) {
+    showingUrls.push(e.src);
+  });
 
   $('body').keypress(function(e) {
     if (e.which == 'j'.charCodeAt(0)) {
@@ -103,7 +108,10 @@ $(function() {
       jQuery.get($('#after').attr('href'), function(data) {
         $('#after').attr('href', '?after=' + data.next);
         $.each(data.img, function(_, i) {
-          ss.append($('<img/>').attr('src', i.url).attr('alt', i.title));
+          if (-1 == showingUrls.indexOf(i.url)) {
+            showingUrls.push(i.url);
+            ss.append($('<img/>').attr('src', i.url).attr('alt', i.title));
+          }
         });
       });
     }
