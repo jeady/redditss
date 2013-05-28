@@ -3,6 +3,8 @@ require 'ruby_reddit_api'
 require 'sinatra'
 
 set :public_folder, File.dirname(__FILE__) + '/assets'
+set :port, 3000
+set :bind, '0.0.0.0'
 
 helpers do
   def need_api!
