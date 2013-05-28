@@ -15,6 +15,7 @@ helpers do
 
   def authenticated?
     @auth ||= Rack::Auth::Basic::Request.new(request.env)
+    return false if !@auth.provided? or !@auth.basic?
     @api ||= Reddit::Api.new @auth.credentials[0], @auth.credentials[1]
     @api.login
   end
