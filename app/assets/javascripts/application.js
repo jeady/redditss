@@ -26,6 +26,7 @@ $(function() {
   var paused = false;
   var fetchWhen = 5;
   var preload = 2;
+  var loadMax = 100;
   var showingUrls = [];
   var allImg = [];
   var toShow = [];
@@ -149,10 +150,11 @@ $(function() {
     last.remove();
 
     if (toShow.length == fetchWhen) {
-      if (loadMore)
+      if (allImg.length < loadMax && loadMore) {
         fetch_more();
-      else
+      } else {
         toShow = toShow.concat(allImg);
+      }
     }
 
     if (showed.length == 2 * fetchWhen + allImg.length)
@@ -172,13 +174,12 @@ $(function() {
   }
 
   function fetch_more(cb) {
-    console.log('Fetching...');
     if (typeof(cb) == 'undefined')
       cb = function() {};
     jQuery.get($('#after').attr('href'), function(data) {
       $('#after').attr('href', '?after=' + data.next);
       $.each(data.img, function(_, i) {
-        if (-1 == showingUrls.indexOf(i.url)) {
+        if (allImg.length < loadMax && -1 == showingUrls.indexOf(i.url)) {
           showingUrls.push(i.url);
           allImg.push({url: i.url, alt: i.title});
           toShow.push({url: i.url, alt: i.title});
