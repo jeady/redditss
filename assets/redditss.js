@@ -177,7 +177,7 @@ $(function() {
     if (typeof(cb) == 'undefined')
       cb = function() {};
     jQuery.get($('#after').attr('href'), function(data) {
-      $('#after').attr('href', '?after=' + data.next);
+      $('#after').attr('href', '/fetch/after/' + data.next);
       $.each(data.img, function(_, i) {
         if (allImg.length < loadMax && -1 == showingUrls.indexOf(i.url)) {
           showingUrls.push(i.url);
